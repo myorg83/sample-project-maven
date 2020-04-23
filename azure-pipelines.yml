@@ -1,0 +1,54 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+resources:
+  repositories:
+  - repository: mavenrepo
+    type: github
+    endpoint: myorg83
+    name:  myorg83/sample-project-maven
+    ref: master
+
+    
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- checkout: mavenrepo
+- script: dir $(Build.SourcesDirectory)
+- task: Maven@3
+  inputs:
+    mavenPomFile: '/home/vsts/work/1/s/sample-project-maven/pom.xml'
+    mavenOptions: '-Xmx3072m'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.8'
+    jdkArchitectureOption: 'x64'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    goals: 'package'
+# ...
+# add these as the last steps
+# to deploy to your app service
+- task: PublishBuildArtifacts@1
+  displayName: Publish Artifact
+  inputs:
+    PathtoPublish: $(build.artifactstagingdirectory)    
+- task: AzureFunctionApp@1
+  displayName: Azure Function App deploy
+  inputs:
+    azureSubscription: $(serviceConnectionToAzure)
+    appType: functionApp
+    appName: $(appName)
+    package: $(build.artifactstagingdirectory)
+# at the top of your YAML file 
+# set some variables that you'll need when you deploy
+variables:
+  # the name of the service connection that you created above
+  serviceConnectionToAzure: connection-to-my-rg
+  # the name of your web app here is the same one you used above
+  # when you created the web app using the Azure CLI
+  appName: FunctionApp320200422145609
