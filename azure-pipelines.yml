@@ -1,5 +1,5 @@
 # Maven
-# Build your Java project and run tests with Apache
+# Build your Java project and run tests with Apache Maven.
 # Add steps that analyze code, save build artifacts, deploy, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/java
 resources:
@@ -8,8 +8,9 @@ resources:
     type: github
     endpoint: myorg83
     name:  myorg83/sample-project-maven
-    ref: master
-
+    trigger:  # Optional; Triggers are enabled by default
+      batch: yes
+    checkout: $(Build.SourcesDirectory)/sample-project-maven
     
 trigger:
 - master
@@ -18,11 +19,17 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- checkout: mavenrepo
+#- checkout: self
+#- checkout: mavenrepo
+
 - script: dir $(Build.SourcesDirectory)
+- script: echo $(Build.Repository.Name)
+- script: echo $(Build.Repository.Tfvc.Workspace)
+- script: echo $(Build.SourceBranchName)
+
 - task: Maven@3
   inputs:
-    mavenPomFile: '/home/vsts/work/1/s/sample-project-maven/pom.xml'
+    mavenPomFile: 'pom.xml'
     mavenOptions: '-Xmx3072m'
     javaHomeOption: 'JDKVersion'
     jdkVersionOption: '1.8'
